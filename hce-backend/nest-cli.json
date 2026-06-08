@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/hce-backend/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/hce-backend/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/hce-backend",
+  "projects": {
+    "database": {
+      "type": "library",
+      "root": "libs/database",
+      "entryFile": "index",
+      "sourceRoot": "libs/database/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/database/tsconfig.lib.json"
+      }
+    },
+    "hce-backend": {
+      "type": "application",
+      "root": "apps/hce-backend",
+      "entryFile": "main",
+      "sourceRoot": "apps/hce-backend/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/hce-backend/tsconfig.app.json"
+      }
+    },
+    "movements-ms": {
+      "type": "application",
+      "root": "apps/movements-ms",
+      "entryFile": "main",
+      "sourceRoot": "apps/movements-ms/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/movements-ms/tsconfig.app.json"
+      }
+    },
+    "purchases-ms": {
+      "type": "application",
+      "root": "apps/purchases-ms",
+      "entryFile": "main",
+      "sourceRoot": "apps/purchases-ms/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/purchases-ms/tsconfig.app.json"
+      }
+    },
+    "sales-ms": {
+      "type": "application",
+      "root": "apps/sales-ms",
+      "entryFile": "main",
+      "sourceRoot": "apps/sales-ms/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/sales-ms/tsconfig.app.json"
+      }
+    }
+  }
+}
