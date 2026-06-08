@@ -1,10 +1,10 @@
 import api from "@/lib/utils/api";
-import { Product, CreateProductDto, UpdateProductDto } from "@/types/product.types";
+import { Product, CreateProductDto, UpdateProductDto, ProductResponse } from "@/types/product.types";
 
 export const productsService = {
   getAll: async (): Promise<Product[]> => {
-    const { data } = await api.get<Product[]>("/products");
-    return data;
+    const { data } = await api.get<ProductResponse>("/products");
+    return data.data;
   },
 
   create: async (dto: CreateProductDto): Promise<Product> => {

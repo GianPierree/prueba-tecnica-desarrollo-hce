@@ -18,6 +18,11 @@ export interface PurchaseDetail {
   Total: number;
 }
 
+export interface PurchaseResponse {
+  data: Purchase[];
+  success: boolean;
+}
+
 export interface Purchase {
   Id_CompraCab: number;
   FecRegistro: string;

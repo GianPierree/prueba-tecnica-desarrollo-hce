@@ -19,13 +19,15 @@ export default function LoginPage() {
     try {
       const data = await authService.login({ email, password });
       localStorage.setItem("hce_token", data.access_token);
-      localStorage.setItem("hce_user", JSON.stringify(data.user));
-      addToast({ title: `Bienvenido, ${data.user.nombreCompleto}`, color: "success" });
+      // localStorage.setItem("hce_user", JSON.stringify(data.user));
+      addToast({ title: `Bienvenido!!!`, color: "success" });
       router.push("/");
     } catch (e: unknown) {
-      const msg =
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Credenciales inválidas";
+      const err = e as { response?: { data?: { message?: string | string[] } } };
+      const rawMsg = err?.response?.data?.message;
+      const msg = Array.isArray(rawMsg)
+        ? rawMsg.join(", ")
+        : rawMsg || "Credenciales inválidas";
       addToast({ title: msg, color: "danger" });
     } finally {
       setLoading(false);
@@ -49,6 +51,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
             />
             <Input
               label="Contraseña"

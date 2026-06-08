@@ -88,11 +88,11 @@ export default function KardexPage() {
                 <TableCell className="font-medium">{e.Nombre_producto}</TableCell>
                 <TableCell className="text-right">
                   <Chip
-                    color={e.stock_actual === 0 ? "danger" : e.stock_actual < 10 ? "warning" : "success"}
+                    color={e.StockActual === 0 ? "danger" : e.StockActual < 10 ? "warning" : "success"}
                     variant="flat"
                     size="sm"
                   >
-                    {e.stock_actual}
+                    {e.StockActual}
                   </Chip>
                 </TableCell>
                 <TableCell className="text-right">{formatCurrency(e.Costo)}</TableCell>

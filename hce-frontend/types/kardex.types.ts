@@ -1,9 +1,14 @@
 export interface KardexEntry {
   Id_producto: number;
   Nombre_producto: string;
-  stock_actual: number;
+  StockActual: number;
   Costo: number;
   PrecioVenta: number;
+}
+
+export interface KardexResponse {
+  success: boolean;
+  data: KardexEntry[];
 }
 
 export interface KardexMovement {
@@ -13,4 +18,9 @@ export interface KardexMovement {
   Cantidad: number;
   Fec_registro: string;
   Id_TipoMovimiento: 1 | 2;
+}
+
+export interface KardexMovementResponse {
+  success: boolean;
+  data: KardexMovement[]; 
 }

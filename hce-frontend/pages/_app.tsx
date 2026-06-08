@@ -4,12 +4,12 @@ import "../styles/globals.css";
 
 const HeroUIProvider = dynamic(
   () => import("@heroui/react").then((mod) => mod.HeroUIProvider),
-  { ssr: false }
+  { ssr: false, loading: () => null }
 );
 
 const ToastProvider = dynamic(
   () => import("@heroui/react").then((mod) => mod.ToastProvider),
-  { ssr: false }
+  { ssr: false, loading: () => null }
 );
 
 export default function App({ Component, pageProps }: AppProps) {

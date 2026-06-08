@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const { NextFederationPlugin } = require('@module-federation/nextjs-mf');
@@ -19,17 +20,38 @@ const nextConfig = {
           './MovementsModal': './components/kardex/MovementsModal.tsx',
         },
         shared: {
-          react:       { singleton: true, requiredVersion: '^18.0.0' },
-          'react-dom': { singleton: true, requiredVersion: '^18.0.0' },
-          axios:       { singleton: true },
+          react: {
+            singleton: true,
+            requiredVersion: '^18.0.0',
+            eager: true,
+          },
+          'react-dom': {
+            singleton: true,
+            requiredVersion: '^18.0.0',
+            eager: true,
+          },
+          'react/jsx-runtime': {
+            singleton: true,
+            eager: true,
+          },
+          'react/jsx-dev-runtime': {
+            singleton: true,
+            eager: true,
+          },
+          axios: { singleton: true },
+          '@heroui/react': { singleton: true },
+          'framer-motion': { singleton: true },
+          zustand: { singleton: true },
         },
         extraOptions: {
           exposePages: true,
           enableImageLoaderFix: true,
           enableUrlLoaderFix: true,
+          skipSharingNextInternals: false,
         },
       })
     );
+
     return config;
   },
 };

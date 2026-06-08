@@ -16,7 +16,8 @@ export default function ProductsPage() {
 
   const load = useCallback(async () => {
     try {
-      setProducts(await productsService.getAll());
+      const products = await productsService.getAll()
+      setProducts(products);
     } catch {
       addToast({ title: "Error al cargar productos", color: "danger" });
     }

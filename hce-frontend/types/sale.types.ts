@@ -18,6 +18,11 @@ export interface SaleDetail {
   Total: number;
 }
 
+export interface SaleResponse {
+  data: Sale[];
+  success: boolean;
+}
+
 export interface Sale {
   Id_VentaCab: number;
   fecRegistro: string;

@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-import { useRouter } from "next/router";
 import Link from "next/link";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
@@ -11,8 +9,6 @@ const modules = [
 ];
 
 export default function Home() {
-  const router = useRouter();
-  useEffect(() => { if (!localStorage.getItem("hce_token")) router.replace("/login"); }, [router]);
   return (
     <DashboardLayout>
       <div className="mb-8">

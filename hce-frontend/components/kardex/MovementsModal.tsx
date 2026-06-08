@@ -17,15 +17,23 @@ export default function MovementsModal({ isOpen, onClose, productName, movements
           ) : (
             <Table aria-label={`Movimientos de ${productName}`} removeWrapper>
               <TableHeader>
-                <TableColumn>FECHA</TableColumn><TableColumn>TIPO</TableColumn><TableColumn>REFERENCIA</TableColumn>
-                <TableColumn className="text-right">CANTIDAD</TableColumn><TableColumn className="text-right">COSTO UNIT.</TableColumn>
-                <TableColumn className="text-right">STOCK ANT.</TableColumn><TableColumn className="text-right">STOCK ACT.</TableColumn>
+                <TableColumn>FECHA</TableColumn>
+                <TableColumn>TIPO</TableColumn>
+                <TableColumn>REFERENCIA</TableColumn>
+                <TableColumn className="text-right">CANTIDAD</TableColumn>
+                <TableColumn className="text-right">COSTO UNIT.</TableColumn>
+                <TableColumn className="text-right">STOCK ANT.</TableColumn>
+                <TableColumn className="text-right">STOCK ACT.</TableColumn>
               </TableHeader>
               <TableBody>
                 {movements.map(m => (
                   <TableRow key={m.id}>
                     <TableCell>{formatDate(m.fecha)}</TableCell>
-                    <TableCell><Chip color={m.tipo===1?"success":"danger"} variant="flat" size="sm">{m.tipo_label}</Chip></TableCell>
+                    <TableCell>
+                      <Chip color={m.tipo===1?"success":"danger"} variant="flat" size="sm">
+                        {m.tipo_label}
+                      </Chip>
+                    </TableCell>
                     <TableCell className="text-gray-600">{m.referencia}</TableCell>
                     <TableCell className="text-right">{m.cantidad}</TableCell>
                     <TableCell className="text-right">{formatCurrency(m.costo_unitario)}</TableCell>

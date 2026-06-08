@@ -7,6 +7,11 @@ export interface Product {
   PrecioVenta: number;
 }
 
+export interface ProductResponse {
+  data: Product[];
+  success: true;
+}
+
 export interface CreateProductDto {
   Nombre_producto: string;
   NroLote: string;

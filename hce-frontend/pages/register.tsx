@@ -29,14 +29,17 @@ export default function RegisterPage() {
     try {
       const data = await authService.register({ nombreCompleto, email, password });
       localStorage.setItem("hce_token", data.access_token);
-      localStorage.setItem("hce_user", JSON.stringify(data.user));
-      addToast({ title: `Cuenta creada. Bienvenido, ${data.user.nombreCompleto}`, color: "success" });
+      // localStorage.setItem("hce_user", JSON.stringify(data.user));
+      addToast({ title: `Cuenta creada. Bienvenido!!!`, color: "success" });
       router.push("/");
     } catch (e: unknown) {
-      const msg =
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Error al crear cuenta";
+      const err = e as { response?: { data?: { message?: string | string[] } } };
+      const rawMsg = err?.response?.data?.message;
+      const msg = Array.isArray(rawMsg)
+        ? rawMsg.join(", ")
+        : rawMsg || "Error al crear cuenta";
       addToast({ title: msg, color: "danger" });
+      console.error("Register error:", err?.response?.data);
     } finally {
       setLoading(false);
     }
@@ -78,6 +81,7 @@ export default function RegisterPage() {
               placeholder="Repite tu contraseña"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleRegister()}
             />
           </div>
           <Button

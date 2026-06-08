@@ -1,8 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  Button, Input, Select, SelectItem, Chip,
-  Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
-  Divider, addToast,
+  Button,
+  Input,
+  Select,
+  SelectItem,
+  Chip,
+  Table,
+  TableHeader, 
+  TableColumn, 
+  TableBody, 
+  TableRow, 
+  TableCell,
+  Divider, 
+  addToast,
 } from "@heroui/react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { productsService } from "@/lib/services/products.service";
@@ -41,9 +51,8 @@ export default function SalesPage() {
         kardexService.getAll(),
       ]);
       setProducts(prods);
-      // Construir mapa de stock desde el kardex (basado en movimientos reales)
       const map: Record<number, number> = {};
-      kardex.forEach((k) => { map[k.Id_producto] = k.stock_actual; });
+      kardex.forEach((k) => { map[k.Id_producto] = k.StockActual; });
       setStockMap(map);
     } catch {
       addToast({ title: "Error al cargar datos", color: "danger" });
