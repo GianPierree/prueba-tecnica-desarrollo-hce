@@ -4,7 +4,7 @@
   "sourceRoot": "apps/hce-backend/src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "webpack": true,
+    "webpack": false,
     "tsConfigPath": "apps/hce-backend/tsconfig.app.json"
   },
   "monorepo": true,

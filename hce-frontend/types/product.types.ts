@@ -1,11 +1,22 @@
 export interface Product {
-  id: string; codigo: string; nombre: string; descripcion?: string;
-  stock: number; costo: number; precio_venta: number;
-  categoria: string; unidad_medida: string; activo: boolean;
-  created_at: string; updated_at: string;
+  Id_producto: number;
+  Nombre_producto: string;
+  NroLote: string;
+  Fec_registro: string;
+  Costo: number;
+  PrecioVenta: number;
 }
+
 export interface CreateProductDto {
-  codigo: string; nombre: string; descripcion?: string;
-  costo: number; categoria: string; unidad_medida: string;
+  Nombre_producto: string;
+  NroLote: string;
+  Costo: number;
+  PrecioVenta?: number;
 }
-export interface UpdateProductDto extends Partial<CreateProductDto> { id: string; }
+
+export interface UpdateProductDto {
+  Nombre_producto?: string;
+  NroLote?: string;
+  Costo?: number;
+  PrecioVenta?: number;
+}

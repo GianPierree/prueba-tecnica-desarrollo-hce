@@ -1,12 +1,28 @@
-export interface PurchaseDetail {
-  producto_id: string; nombre_producto: string;
-  cantidad: number; costo_unitario: number; subtotal: number;
+export interface PurchaseDetailDto {
+  Id_producto: number;
+  Cantidad: number;
+  Precio: number;
 }
-export interface Purchase {
-  id: string; numero_compra: string; proveedor: string; fecha: string;
-  detalles: PurchaseDetail[]; subtotal: number; igv: number; total: number; created_at: string;
-}
+
 export interface CreatePurchaseDto {
-  proveedor: string; fecha: string;
-  detalles: Omit<PurchaseDetail, 'nombre_producto'>[];
+  detalles: PurchaseDetailDto[];
+}
+
+export interface PurchaseDetail {
+  Id_CompraDet: number;
+  Id_producto: number;
+  Cantidad: number;
+  Precio: number;
+  Sub_Total: number;
+  Igv: number;
+  Total: number;
+}
+
+export interface Purchase {
+  Id_CompraCab: number;
+  FecRegistro: string;
+  SubTotal: number;
+  Igv: number;
+  Total: number;
+  detalles: PurchaseDetail[];
 }

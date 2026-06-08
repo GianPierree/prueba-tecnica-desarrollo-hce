@@ -6,26 +6,40 @@ import { authService } from "@/lib/services/auth.service";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [nombre, setNombre] = useState("");
+  const [nombreCompleto, setNombreCompleto] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!nombre || !email || !password || !confirm) { addToast({ title:"Complete todos los campos", color:"warning" }); return; }
-    if (password !== confirm) { addToast({ title:"Las contraseñas no coinciden", color:"danger" }); return; }
-    if (password.length < 6) { addToast({ title:"La contraseña debe tener al menos 6 caracteres", color:"warning" }); return; }
+    if (!nombreCompleto || !email || !password || !confirm) {
+      addToast({ title: "Complete todos los campos", color: "warning" });
+      return;
+    }
+    if (password !== confirm) {
+      addToast({ title: "Las contraseñas no coinciden", color: "danger" });
+      return;
+    }
+    if (password.length < 6) {
+      addToast({ title: "La contraseña debe tener al menos 6 caracteres", color: "warning" });
+      return;
+    }
     setLoading(true);
     try {
-      const { token, user } = await authService.register({ nombre, email, password });
-      localStorage.setItem("hce_token", token);
-      localStorage.setItem("hce_user", JSON.stringify(user));
-      addToast({ title:`Cuenta creada. Bienvenido, ${user.nombre}`, color:"success" });
+      const data = await authService.register({ nombreCompleto, email, password });
+      localStorage.setItem("hce_token", data.access_token);
+      localStorage.setItem("hce_user", JSON.stringify(data.user));
+      addToast({ title: `Cuenta creada. Bienvenido, ${data.user.nombreCompleto}`, color: "success" });
       router.push("/");
     } catch (e: unknown) {
-      addToast({ title: e instanceof Error ? e.message : "Error al crear cuenta", color:"danger" });
-    } finally { setLoading(false); }
+      const msg =
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Error al crear cuenta";
+      addToast({ title: msg, color: "danger" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -38,15 +52,48 @@ export default function RegisterPage() {
             <p className="text-gray-500 text-sm mt-1">Regístrate para acceder al sistema</p>
           </div>
           <div className="space-y-4">
-            <Input label="Nombre completo *" placeholder="Juan Pérez" value={nombre} onChange={e => setNombre(e.target.value)} />
-            <Input label="Correo electrónico *" type="email" placeholder="correo@ejemplo.com" value={email} onChange={e => setEmail(e.target.value)} />
-            <Input label="Contraseña *" type="password" placeholder="Mínimo 6 caracteres" value={password} onChange={e => setPassword(e.target.value)} />
-            <Input label="Confirmar contraseña *" type="password" placeholder="Repite tu contraseña" value={confirm} onChange={e => setConfirm(e.target.value)} />
+            <Input
+              label="Nombre completo *"
+              placeholder="Juan Pérez"
+              value={nombreCompleto}
+              onChange={(e) => setNombreCompleto(e.target.value)}
+            />
+            <Input
+              label="Correo electrónico *"
+              type="email"
+              placeholder="correo@ejemplo.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <Input
+              label="Contraseña *"
+              type="password"
+              placeholder="Mínimo 6 caracteres"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <Input
+              label="Confirmar contraseña *"
+              type="password"
+              placeholder="Repite tu contraseña"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+            />
           </div>
-          <Button color="primary" className="w-full mt-6" size="lg" onPress={handleRegister} isLoading={loading}>Crear cuenta</Button>
+          <Button
+            color="primary"
+            className="w-full mt-6"
+            size="lg"
+            onPress={handleRegister}
+            isLoading={loading}
+          >
+            Crear cuenta
+          </Button>
           <p className="text-center text-sm text-gray-500 mt-6">
             ¿Ya tienes cuenta?{" "}
-            <Link href="/login" className="text-blue-600 hover:underline font-medium">Iniciar sesión</Link>
+            <Link href="/login" className="text-blue-600 hover:underline font-medium">
+              Iniciar sesión
+            </Link>
           </p>
         </div>
       </div>

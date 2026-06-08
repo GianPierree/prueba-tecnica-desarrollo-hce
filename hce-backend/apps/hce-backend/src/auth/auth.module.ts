@@ -11,10 +11,10 @@ import { AuthController } from './auth.controller';
   imports: [
     TypeOrmModule.forFeature([User]),
     JwtModule.registerAsync({
+      global: true,
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        global: true,
         secret: config.get<string>('JWT_SECRET') as string,
         signOptions: {
           expiresIn: config.get<string>('JWT_EXPIRES_IN', '30m') as StringValue,
@@ -24,5 +24,6 @@ import { AuthController } from './auth.controller';
   ],
   providers: [AuthService],
   controllers: [AuthController],
+  exports: [JwtModule],
 })
 export class AuthModule {}
