@@ -133,16 +133,12 @@ export default function KardexPage() {
                   <TableColumn className="text-right">CANTIDAD</TableColumn>
                 </TableHeader>
                 <TableBody>
-                  {movements.map((m) => (
-                    <TableRow key={m.Id_MovimientoDet}>
-                      <TableCell>{formatDate(m.Fec_registro)}</TableCell>
+                  {movements.map((m, i) => (
+                    <TableRow key={i}>
+                      <TableCell>{formatDate(m.FechaRegistro)}</TableCell>
                       <TableCell>
-                        <Chip
-                          color={m.Id_TipoMovimiento === 1 ? "success" : "danger"}
-                          variant="flat"
-                          size="sm"
-                        >
-                          {m.Id_TipoMovimiento === 1 ? "Entrada" : "Salida"}
+                        <Chip color={m.TipoMovimiento === "Entrada" ? "success" : "danger"} variant="flat" size="sm">
+                          {m.TipoMovimiento}
                         </Chip>
                       </TableCell>
                       <TableCell className="text-right font-medium">{m.Cantidad}</TableCell>

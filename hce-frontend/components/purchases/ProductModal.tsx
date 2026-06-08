@@ -1,10 +1,20 @@
 import { useState, useEffect } from "react";
 import {
-  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
-  Button, Input, addToast,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Input,
+  addToast,
 } from "@heroui/react";
 import { productsService } from "@/lib/services/products.service";
-import { Product, CreateProductDto, UpdateProductDto } from "@/types/product.types";
+import { 
+  Product, 
+  CreateProductDto, 
+  UpdateProductDto 
+} from "@/types/product.types";
 
 interface Props {
   isOpen: boolean;
@@ -64,6 +74,7 @@ export default function ProductModal({ isOpen, onClose, onSuccess, productToEdit
           Nombre_producto: form.Nombre_producto,
           NroLote: form.NroLote,
           Costo: costo,
+          PrecioVenta: Number((costo * 1.35).toFixed(2))
         };
         await productsService.create(dto);
         addToast({ title: "Producto creado", color: "success" });

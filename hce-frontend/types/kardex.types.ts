@@ -12,12 +12,9 @@ export interface KardexResponse {
 }
 
 export interface KardexMovement {
-  Id_MovimientoDet: number;
-  Id_MovimientoCab: number;
-  Id_producto: number;
+  FechaRegistro: string;
+  TipoMovimiento: "Entrada" | "Salida";
   Cantidad: number;
-  Fec_registro: string;
-  Id_TipoMovimiento: 1 | 2;
 }
 
 export interface KardexMovementResponse {

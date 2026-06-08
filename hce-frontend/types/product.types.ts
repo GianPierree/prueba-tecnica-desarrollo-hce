@@ -16,7 +16,7 @@ export interface CreateProductDto {
   Nombre_producto: string;
   NroLote: string;
   Costo: number;
-  PrecioVenta?: number;
+  PrecioVenta: number;
 }
 
 export interface UpdateProductDto {
