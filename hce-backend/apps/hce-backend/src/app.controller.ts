@@ -3,58 +3,127 @@ import {
   Controller,
   Post,
   Get,
+  Put,
   Body,
+  Param,
+  ParseIntPipe,
   UseGuards,
-  Inject,
-  OnModuleInit,
 } from '@nestjs/common';
-import { ClientKafka } from '@nestjs/microservices';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthGuard } from './auth/auth.guard';
+import { BusinessFacade } from './common/facades/business.facade';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { CreateSaleDto } from './dto/create-sale.dto';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
-@ApiTags('Operaciones Transaccionales')
-@ApiBearerAuth()
-@Controller()
-export class AppController implements OnModuleInit {
-  constructor(
-    @Inject('PURCHASES_SERVICE') private readonly purchasesClient: ClientKafka,
-    @Inject('SALES_SERVICE') private readonly salesClient: ClientKafka,
-    @Inject('MOVEMENTS_SERVICE') private readonly movementsClient: ClientKafka,
-  ) {}
+@ApiTags('Compras')
+@ApiBearerAuth('access-token')
+@UseGuards(AuthGuard)
+@Controller('purchases')
+export class PurchasesController {
+  constructor(private readonly facade: BusinessFacade) {}
 
-  async onModuleInit() {
-    this.purchasesClient.subscribeToResponseOf('create_purchase');
-    this.salesClient.subscribeToResponseOf('create_sale');
-    this.movementsClient.subscribeToResponseOf('get_kardex');
-
-    await this.purchasesClient.connect();
-    await this.salesClient.connect();
-    await this.movementsClient.connect();
+  @Post()
+  @ApiOperation({ summary: 'Registrar una compra con detalle de productos' })
+  @ApiResponse({ status: 201, description: 'Compra registrada y Kardex actualizado (Entrada).' })
+  @ApiResponse({ status: 401, description: 'No autorizado.' })
+  createPurchase(@Body() dto: CreatePurchaseDto) {
+    return this.facade.createPurchase(dto);
   }
 
-  @UseGuards(AuthGuard)
-  @Post('purchases')
-  @ApiOperation({ summary: 'Registrar una nueva compra (Entrada al Kardex)' })
-  @ApiResponse({ status: 201, description: 'Compra registrada con éxito y stock actualizado.' })
-  createPurchase(@Body() createPurchaseDto: CreatePurchaseDto) {
-    return this.purchasesClient.send('create_purchase', createPurchaseDto);
+  @Get()
+  @ApiOperation({ summary: 'Listar todas las compras registradas' })
+  @ApiResponse({ status: 200, description: 'Lista de compras con su detalle.' })
+  listPurchases() {
+    return this.facade.listPurchases();
+  }
+}
+
+@ApiTags('Ventas')
+@ApiBearerAuth('access-token')
+@UseGuards(AuthGuard)
+@Controller('sales')
+export class SalesController {
+  constructor(private readonly facade: BusinessFacade) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Registrar una venta con detalle de productos' })
+  @ApiResponse({ status: 201, description: 'Venta registrada y Kardex actualizado (Salida).' })
+  @ApiResponse({ status: 400, description: 'Stock insuficiente.' })
+  @ApiResponse({ status: 401, description: 'No autorizado.' })
+  createSale(@Body() dto: CreateSaleDto) {
+    return this.facade.createSale(dto);
   }
 
-  @UseGuards(AuthGuard)
-  @Post('sales')
-  @ApiOperation({ summary: 'Registrar una nueva venta (Salida del Kardex)' })
-  @ApiResponse({ status: 201, description: 'Venta registrada con éxito y stock descontado.' })
-  @ApiResponse({ status: 400, description: 'Error por falta de stock.' })
-  createSale(@Body() createSaleDto: CreateSaleDto) {
-    return this.salesClient.send('create_sale', createSaleDto);
+  @Get()
+  @ApiOperation({ summary: 'Listar todas las ventas registradas' })
+  @ApiResponse({ status: 200, description: 'Lista de ventas con su detalle.' })
+  listSales() {
+    return this.facade.listSales();
+  }
+}
+
+@ApiTags('Productos')
+@ApiBearerAuth('access-token')
+@UseGuards(AuthGuard)
+@Controller('products')
+export class ProductsController {
+  constructor(private readonly facade: BusinessFacade) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Registrar un nuevo producto' })
+  @ApiResponse({ status: 201, description: 'Producto creado exitosamente.' })
+  @ApiResponse({ status: 401, description: 'No autorizado.' })
+  createProduct(@Body() dto: CreateProductDto) {
+    return this.facade.createProduct(dto);
   }
 
-  @UseGuards(AuthGuard)
-  @Get('kardex')
-  @ApiOperation({ summary: 'Obtener la vista principal del Kardex Histórico' })
+  @Put(':id')
+  @ApiOperation({ summary: 'Actualizar un producto existente' })
+  @ApiParam({ name: 'id', type: 'number', description: 'ID del producto' })
+  @ApiResponse({ status: 200, description: 'Producto actualizado.' })
+  @ApiResponse({ status: 404, description: 'Producto no encontrado.' })
+  updateProduct(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateProductDto,
+  ) {
+    return this.facade.updateProduct(id, dto);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Listar todos los productos' })
+  @ApiResponse({ status: 200, description: 'Lista de productos con stock y precios.' })
+  listProducts() {
+    return this.facade.listProducts();
+  }
+}
+
+@ApiTags('Kardex')
+@ApiBearerAuth('access-token')
+@UseGuards(AuthGuard)
+@Controller('kardex')
+export class KardexController {
+  constructor(private readonly facade: BusinessFacade) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Listar Kardex: stock actual, costo y precio por producto' })
+  @ApiResponse({ status: 200, description: 'Vista de Kardex con todos los productos.' })
   getKardex() {
-    return this.movementsClient.send('get_kardex', {});
+    return this.facade.getKardex();
+  }
+
+  @Get('movements/:productId')
+  @ApiOperation({ summary: 'Historial de movimientos de un producto (modal de detalle)' })
+  @ApiParam({ name: 'productId', type: 'number', description: 'ID del producto' })
+  @ApiResponse({ status: 200, description: 'Historial de compras y ventas del producto.' })
+  getProductMovements(@Param('productId', ParseIntPipe) productId: number) {
+    return this.facade.getProductMovements(productId);
   }
 }

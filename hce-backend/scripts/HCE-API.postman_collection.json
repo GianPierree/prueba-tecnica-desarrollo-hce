@@ -1,0 +1,204 @@
+{
+  "info": {
+    "name": "HCE - Sistema de Compras y Ventas",
+    "description": "Colección completa para probar la API REST del sistema HCE. Orden sugerido: 1) Registrar usuario, 2) Login, 3) Copiar token, 4) Probar endpoints protegidos.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Registrar usuario",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Admin HCE\",\n  \"email\": \"admin@hce.com\",\n  \"password\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login (guarda token automáticamente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.access_token) {",
+                  "  pm.collectionVariables.set('token', res.access_token);",
+                  "  console.log('Token guardado:', res.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@hce.com\",\n  \"password\": \"123456\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Productos",
+      "item": [
+        {
+          "name": "Registrar Producto",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/products", "host": ["{{baseUrl}}"], "path": ["products"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Nombre_producto\": \"Paracetamol 500mg\",\n  \"NroLote\": \"LOTE-001\",\n  \"Costo\": 10.00,\n  \"PrecioVenta\": 13.50\n}"
+            }
+          }
+        },
+        {
+          "name": "Actualizar Producto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/products/1", "host": ["{{baseUrl}}"], "path": ["products", "1"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Nombre_producto\": \"Paracetamol 1000mg\",\n  \"NroLote\": \"LOTE-001-B\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Listar Productos",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/products", "host": ["{{baseUrl}}"], "path": ["products"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Compras",
+      "item": [
+        {
+          "name": "Registrar Compra",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/purchases", "host": ["{{baseUrl}}"], "path": ["purchases"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"detalles\": [\n    {\n      \"Id_producto\": 1,\n      \"Cantidad\": 50,\n      \"Precio\": 10.00\n    },\n    {\n      \"Id_producto\": 2,\n      \"Cantidad\": 30,\n      \"Precio\": 8.50\n    }\n  ]\n}"
+            },
+            "description": "Registra una compra. Actualiza stock, Costo y PrecioVenta (Costo × 1.35). Genera movimiento tipo Entrada."
+          }
+        },
+        {
+          "name": "Listar Compras",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/purchases", "host": ["{{baseUrl}}"], "path": ["purchases"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ventas",
+      "item": [
+        {
+          "name": "Registrar Venta",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/sales", "host": ["{{baseUrl}}"], "path": ["sales"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"detalles\": [\n    {\n      \"Id_producto\": 1,\n      \"Cantidad\": 5,\n      \"Precio\": 13.50\n    }\n  ]\n}"
+            },
+            "description": "Valida stock disponible. Si cantidad > stock retorna error. Genera movimiento tipo Salida."
+          }
+        },
+        {
+          "name": "Registrar Venta (sin stock - debe fallar)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/sales", "host": ["{{baseUrl}}"], "path": ["sales"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"detalles\": [\n    {\n      \"Id_producto\": 1,\n      \"Cantidad\": 9999,\n      \"Precio\": 13.50\n    }\n  ]\n}"
+            },
+            "description": "Debe devolver error: cantidad no debe ser mayor al stock actual."
+          }
+        },
+        {
+          "name": "Listar Ventas",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/sales", "host": ["{{baseUrl}}"], "path": ["sales"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Kardex",
+      "item": [
+        {
+          "name": "Listar Kardex (stock actual por producto)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/kardex", "host": ["{{baseUrl}}"], "path": ["kardex"] }
+          }
+        },
+        {
+          "name": "Movimientos de un producto (modal detalle)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/kardex/movements/1", "host": ["{{baseUrl}}"], "path": ["kardex", "movements", "1"] },
+            "description": "Reemplaza /1 con el Id_producto que quieras consultar."
+          }
+        }
+      ]
+    }
+  ]
+}

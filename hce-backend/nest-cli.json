@@ -54,6 +54,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/sales-ms/tsconfig.app.json"
       }
+    },
+    "products-ms": {
+      "type": "application",
+      "root": "apps/products-ms",
+      "entryFile": "main",
+      "sourceRoot": "apps/products-ms/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/products-ms/tsconfig.app.json"
+      }
     }
   }
 }

@@ -1,10 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prettier/prettier */
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { RpcException, ClientKafka } from '@nestjs/microservices';
 import { SalesCab, SalesDet, Products } from '@app/database';
-import { CreateSalePayload, ProcessedDetail } from './interfaces/sales-ms.interface';
+import type {
+  CreateSalePayload,
+  ProcessedDetail,
+} from './interfaces/sales-ms.interface';
+import { AuditLog } from '../../hce-backend/src/common/decorators/audit-log.decorator';
 
 @Injectable()
 export class SalesMsService {
@@ -18,6 +23,7 @@ export class SalesMsService {
     private dataSource: DataSource,
   ) {}
 
+  @AuditLog('Procesar Venta')
   async processSale(data: CreateSalePayload) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -27,12 +33,12 @@ export class SalesMsService {
       let subTotalCab = 0;
       let igvCab = 0;
       let totalCab = 0;
-      
+
       const detallesProcesados: ProcessedDetail[] = [];
 
       for (const det of data.detalles) {
-        const producto = await queryRunner.manager.findOne(Products, { 
-          where: { Id_producto: det.Id_producto } 
+        const producto = await queryRunner.manager.findOne(Products, {
+          where: { Id_producto: det.Id_producto },
         });
 
         if (!producto) {
@@ -40,7 +46,9 @@ export class SalesMsService {
         }
 
         if (det.Cantidad > producto.StockActual) {
-          throw new RpcException(`La cantidad solicitada (${det.Cantidad}) para el producto ${producto.Nombre_producto} no debe ser mayor al stock actual (${producto.StockActual})`);
+          throw new RpcException(
+            `La cantidad solicitada (${det.Cantidad}) para "${producto.Nombre_producto}" no debe ser mayor al stock actual (${producto.StockActual})`,
+          );
         }
 
         const subTotal = det.Cantidad * det.Precio;
@@ -58,7 +66,7 @@ export class SalesMsService {
           Sub_Total: subTotal,
           Igv: igv,
           Total: total,
-          ProductoEntidad: producto 
+          ProductoEntidad: producto,
         });
       }
 
@@ -91,12 +99,12 @@ export class SalesMsService {
       const movementPayload = {
         Id_TipoMovimiento: 2,
         Id_DocumentoOrigen: savedCab.Id_VentaCab,
-        detalles: data.detalles.map(d => ({
+        detalles: data.detalles.map((d) => ({
           Id_producto: d.Id_producto,
           Cantidad: d.Cantidad,
         })),
       };
-      
+
       this.movementsClient.emit('register_movement', movementPayload);
 
       return {
@@ -106,13 +114,33 @@ export class SalesMsService {
       };
     } catch (error: unknown) {
       await queryRunner.rollbackTransaction();
-
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-
       this.logger.error('Error al registrar venta', errorMessage);
-      return { success: false, error: errorMessage }; 
+      return { success: false, error: errorMessage };
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  @AuditLog('Listar Ventas')
+  async listSales() {
+    try {
+      const ventas = await this.ventaCabRepo.find({
+        order: { fecRegistro: 'DESC' },
+      });
+
+      const result = await Promise.all(
+        ventas.map(async (cab) => {
+          const detalles = await this.ventaDetRepo.find({
+            where: { Id_VentaCab: cab.Id_VentaCab },
+          });
+          return { ...cab, detalles };
+        }),
+      );
+
+      return { success: true, data: result };
+    } catch (error: unknown) {
+      return { success: false, error: 'No se pudo obtener las ventas' };
     }
   }
 }

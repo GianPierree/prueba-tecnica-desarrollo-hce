@@ -3,7 +3,13 @@ import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { DatabaseModule } from '@app/database';
 import { AuthModule } from './auth/auth.module';
-import { AppController } from './app.controller';
+import {
+  PurchasesController,
+  SalesController,
+  ProductsController,
+  KardexController,
+} from './app.controller';
+import { BusinessFacade } from './common/facades/business.facade';
 
 @Module({
   imports: [
@@ -34,9 +40,22 @@ import { AppController } from './app.controller';
           consumer: { groupId: 'movements-gateway-consumer' },
         },
       },
+      {
+        name: 'PRODUCTS_SERVICE',
+        transport: Transport.KAFKA,
+        options: {
+          client: { clientId: 'products-gateway', brokers: ['localhost:9092'] },
+          consumer: { groupId: 'products-gateway-consumer' },
+        },
+      },
     ]),
   ],
-  controllers: [AppController],
-  providers: [],
+  controllers: [
+    PurchasesController,
+    SalesController,
+    ProductsController,
+    KardexController,
+  ],
+  providers: [BusinessFacade],
 })
 export class AppModule {}

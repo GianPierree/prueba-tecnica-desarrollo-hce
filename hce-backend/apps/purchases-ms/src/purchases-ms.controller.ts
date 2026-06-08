@@ -11,4 +11,9 @@ export class PurchasesMsController {
   async handleCreatePurchase(@Payload() data: CreatePurchasePayload) {
     return await this.purchasesMsService.processPurchase(data);
   }
+
+  @MessagePattern('list_purchases')
+  async handleListPurchases() {
+    return await this.purchasesMsService.listPurchases();
+  }
 }
