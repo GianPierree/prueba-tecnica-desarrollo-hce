@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prettier/prettier */
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -55,21 +54,33 @@ export class MovementsMsService {
   }
 
   async getKardexView() {
-    try {
-      const productos = await this.productRepo.find({
-        select: {
-          Id_producto: true,
-          Nombre_producto: true,
-          StockActual: true,
-          Costo: true,
-          PrecioVenta: true,
-        },
-      });
-      return { success: true, data: productos };
-    } catch (error: unknown) {
-      return { success: false, error: 'No se pudo obtener el Kardex' };
-    }
+  try {
+    const stockQuery = await this.dataSource.query(`
+      SELECT
+        p.Id_producto,
+        p.Nombre_producto,
+        p.Costo,
+        p.PrecioVenta,
+        ISNULL(SUM(
+          CASE mc.Id_TipoMovimiento
+            WHEN 1 THEN md.Cantidad   -- Entrada
+            WHEN 2 THEN -md.Cantidad  -- Salida
+            ELSE 0
+          END
+        ), 0) AS StockActual
+      FROM Products p
+      LEFT JOIN MovementsDet md ON p.Id_producto = md.Id_Producto
+      LEFT JOIN MovementsCab mc ON md.Id_movimientocab = mc.Id_MovimientoCab
+      GROUP BY p.Id_producto, p.Nombre_producto, p.Costo, p.PrecioVenta
+      ORDER BY p.Id_producto
+    `);
+
+    return { success: true, data: stockQuery };
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Error desconocido';
+    return { success: false, error: msg };
   }
+}
 
   async getProductMovements(productId: number) {
     try {

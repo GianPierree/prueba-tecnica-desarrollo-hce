@@ -1,5 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { DatabaseModule } from '@app/database';
 import { AuthModule } from './auth/auth.module';
@@ -13,6 +14,7 @@ import { BusinessFacade } from './common/facades/business.facade';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
     AuthModule,
     ClientsModule.register([
@@ -20,7 +22,10 @@ import { BusinessFacade } from './common/facades/business.facade';
         name: 'PURCHASES_SERVICE',
         transport: Transport.KAFKA,
         options: {
-          client: { clientId: 'purchases-gateway', brokers: ['localhost:9092'] },
+          client: {
+            clientId: 'purchases-gateway',
+            brokers: [process.env.KAFKA_BROKER ?? 'localhost:9092'],
+          },
           consumer: { groupId: 'purchases-gateway-consumer' },
         },
       },
@@ -28,7 +33,10 @@ import { BusinessFacade } from './common/facades/business.facade';
         name: 'SALES_SERVICE',
         transport: Transport.KAFKA,
         options: {
-          client: { clientId: 'sales-gateway', brokers: ['localhost:9092'] },
+          client: {
+            clientId: 'sales-gateway',
+            brokers: [process.env.KAFKA_BROKER ?? 'localhost:9092'],
+          },
           consumer: { groupId: 'sales-gateway-consumer' },
         },
       },
@@ -36,7 +44,10 @@ import { BusinessFacade } from './common/facades/business.facade';
         name: 'MOVEMENTS_SERVICE',
         transport: Transport.KAFKA,
         options: {
-          client: { clientId: 'movements-gateway', brokers: ['localhost:9092'] },
+          client: {
+            clientId: 'movements-gateway',
+            brokers: [process.env.KAFKA_BROKER ?? 'localhost:9092'],
+          },
           consumer: { groupId: 'movements-gateway-consumer' },
         },
       },
@@ -44,7 +55,10 @@ import { BusinessFacade } from './common/facades/business.facade';
         name: 'PRODUCTS_SERVICE',
         transport: Transport.KAFKA,
         options: {
-          client: { clientId: 'products-gateway', brokers: ['localhost:9092'] },
+          client: {
+            clientId: 'products-gateway',
+            brokers: [process.env.KAFKA_BROKER ?? 'localhost:9092'],
+          },
           consumer: { groupId: 'products-gateway-consumer' },
         },
       },
