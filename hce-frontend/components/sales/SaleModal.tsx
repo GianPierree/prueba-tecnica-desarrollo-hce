@@ -1,26 +1,26 @@
-import { 
-  useState, 
-  useEffect, 
-  useCallback 
+import {
+  useState,
+  useEffect,
+  useCallback,
 } from "react";
 import {
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
   ModalFooter,
-  Button, 
-  Input, 
-  Select, 
-  SelectItem, 
-  Table, 
+  Button,
+  Input,
+  Select,
+  SelectItem,
+  Table,
   TableHeader,
-  TableColumn, 
-  TableBody, 
-  TableRow, 
-  TableCell, 
-  Chip, 
-  Divider, 
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+  Chip,
+  Divider,
   addToast,
 } from "@heroui/react";
 import { productsService } from "@/lib/services/products.service";
@@ -29,7 +29,7 @@ import { kardexService } from "@/lib/services/kardex.service";
 import { Product } from "@/types/product.types";
 import { formatCurrency } from "@/lib/utils/formatters";
 
-const TAX_RATE = 0.18;
+const IGV_RATE = 0.18;
 
 interface Line {
   Id_producto: number;
@@ -66,7 +66,9 @@ export default function SaleModal({ isOpen, onClose, onSuccess }: Props) {
       ]);
       setProducts(prods);
       const map: Record<number, number> = {};
-      kardex.forEach((k) => { map[k.Id_producto] = k.StockActual; });
+      kardex.forEach((k) => {
+        map[k.Id_producto] = k.StockActual;
+      });
       setStockMap(map);
     } catch {
       addToast({ title: "Error al cargar datos", color: "danger" });
@@ -98,21 +100,36 @@ export default function SaleModal({ isOpen, onClose, onSuccess }: Props) {
     }
     const q = parseFloat(qty);
     const pr = parseFloat(price);
-    if (q <= 0 || pr <= 0) {
-      addToast({ title: "Valores deben ser mayores a 0", color: "warning" });
+    if (isNaN(q) || q <= 0 || isNaN(pr) || pr <= 0) {
+      addToast({ title: "Cantidad y precio deben ser mayores a 0", color: "warning" });
       return;
     }
+
     if (stockDisp !== null && q > stockDisp) {
-      addToast({ title: `Stock insuficiente. Disponible: ${stockDisp}`, color: "danger" });
+      addToast({
+        title: `Stock insuficiente. Disponible: ${stockDisp} unidades`,
+        color: "danger",
+      });
       return;
     }
+
     const subtotal = q * pr;
-    const igv = subtotal * TAX_RATE;
+    const igv = subtotal * IGV_RATE;
     const total = subtotal + igv;
+
     const p = products.find((x) => x.Id_producto === selId)!;
     setLines((prev) => [
       ...prev,
-      { Id_producto: selId, nombre: p.Nombre_producto, stock_disp: stockDisp ?? 0, Cantidad: q, Precio: pr, subtotal, igv, total },
+      {
+        Id_producto: selId,
+        nombre: p.Nombre_producto,
+        stock_disp: stockDisp ?? 0,
+        Cantidad: q,
+        Precio: pr,
+        subtotal,
+        igv,
+        total,
+      },
     ]);
     setSelId(null);
     setQty("");
@@ -121,8 +138,8 @@ export default function SaleModal({ isOpen, onClose, onSuccess }: Props) {
   };
 
   const grandSubtotal = lines.reduce((s, l) => s + l.subtotal, 0);
-  const grandIgv     = lines.reduce((s, l) => s + l.igv, 0);
-  const grandTotal   = lines.reduce((s, l) => s + l.total, 0);
+  const grandIgv = lines.reduce((s, l) => s + l.igv, 0);
+  const grandTotal = lines.reduce((s, l) => s + l.total, 0);
 
   const handleSubmit = async () => {
     if (!lines.length) {
@@ -156,7 +173,7 @@ export default function SaleModal({ isOpen, onClose, onSuccess }: Props) {
       <ModalContent>
         <ModalHeader>Nueva Venta</ModalHeader>
         <ModalBody className="gap-4">
-          {/* Agregar línea */}
+
           <div>
             <p className="text-sm font-semibold text-gray-700 mb-3">Agregar Producto</p>
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
@@ -165,21 +182,32 @@ export default function SaleModal({ isOpen, onClose, onSuccess }: Props) {
                   label="Producto *"
                   placeholder="Seleccionar..."
                   selectedKeys={selId ? [String(selId)] : []}
-                  onSelectionChange={(k) => onSelectProduct(Number(Array.from(k)[0]))}
+                  onSelectionChange={(k) =>
+                    onSelectProduct(Number(Array.from(k)[0]))
+                  }
                 >
                   {products.map((p) => (
-                    <SelectItem key={p.Id_producto}>{p.Nombre_producto}</SelectItem>
+                    <SelectItem key={p.Id_producto}>
+                      {p.Nombre_producto}
+                    </SelectItem>
                   ))}
                 </Select>
                 {stockDisp !== null && (
                   <p className="text-xs mt-1 text-gray-500">
                     Stock disponible:{" "}
-                    <span className={stockDisp > 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                    <span
+                      className={
+                        stockDisp > 0
+                          ? "text-green-600 font-medium"
+                          : "text-red-600 font-medium"
+                      }
+                    >
                       {stockDisp}
                     </span>
                   </p>
                 )}
               </div>
+
               <Input
                 label="Cantidad *"
                 type="number"
@@ -187,19 +215,30 @@ export default function SaleModal({ isOpen, onClose, onSuccess }: Props) {
                 value={qty}
                 onChange={(e) => setQty(e.target.value)}
               />
+
               <Input
-                label="Precio Unit. (S/) *"
+                label="Precio venta (S/) *"
                 type="number"
-                min="0"
+                min="0.01"
                 step="0.01"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
               />
-              <Button color="primary" onPress={addLine}>Agregar</Button>
+
+              <Button color="primary" onPress={addLine}>
+                Agregar
+              </Button>
             </div>
+
+            {qty && price && !isNaN(parseFloat(qty)) && !isNaN(parseFloat(price)) && (
+              <div className="mt-2 text-xs text-gray-500 bg-gray-50 rounded px-3 py-2">
+                Subtotal: {formatCurrency(parseFloat(qty) * parseFloat(price))} ·
+                IGV (18%): {formatCurrency(parseFloat(qty) * parseFloat(price) * IGV_RATE)} ·
+                Total: {formatCurrency(parseFloat(qty) * parseFloat(price) * (1 + IGV_RATE))}
+              </div>
+            )}
           </div>
 
-          {/* Tabla de líneas */}
           {lines.length > 0 && (
             <>
               <Divider />
@@ -210,7 +249,7 @@ export default function SaleModal({ isOpen, onClose, onSuccess }: Props) {
                   <TableColumn className="text-right">CANT.</TableColumn>
                   <TableColumn className="text-right">PRECIO</TableColumn>
                   <TableColumn className="text-right">SUBTOTAL</TableColumn>
-                  <TableColumn className="text-right">IGV</TableColumn>
+                  <TableColumn className="text-right">IGV (18%)</TableColumn>
                   <TableColumn className="text-right">TOTAL</TableColumn>
                   <TableColumn> </TableColumn>
                 </TableHeader>
@@ -219,18 +258,32 @@ export default function SaleModal({ isOpen, onClose, onSuccess }: Props) {
                     <TableRow key={i}>
                       <TableCell>{l.nombre}</TableCell>
                       <TableCell className="text-right">
-                        <Chip size="sm" color={l.stock_disp > 0 ? "success" : "danger"} variant="flat">
+                        <Chip
+                          size="sm"
+                          color={l.stock_disp > 0 ? "success" : "danger"}
+                          variant="flat"
+                        >
                           {l.stock_disp}
                         </Chip>
                       </TableCell>
                       <TableCell className="text-right">{l.Cantidad}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(l.Precio)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(l.subtotal)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(l.igv)}</TableCell>
-                      <TableCell className="text-right font-medium">{formatCurrency(l.total)}</TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(l.Precio)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(l.subtotal)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(l.igv)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(l.total)}
+                      </TableCell>
                       <TableCell>
                         <button
-                          onClick={() => setLines((p) => p.filter((_, j) => j !== i))}
+                          onClick={() =>
+                            setLines((p) => p.filter((_, j) => j !== i))
+                          }
                           className="text-red-500 hover:text-red-700 text-sm"
                         >
                           Quitar
@@ -242,25 +295,36 @@ export default function SaleModal({ isOpen, onClose, onSuccess }: Props) {
               </Table>
 
               <div className="flex justify-end">
-                <div className="w-64 space-y-2 text-sm">
+                <div className="w-72 space-y-2 text-sm">
                   <div className="flex justify-between text-gray-600">
-                    <span>Subtotal:</span><span>{formatCurrency(grandSubtotal)}</span>
+                    <span>Subtotal:</span>
+                    <span>{formatCurrency(grandSubtotal)}</span>
                   </div>
                   <div className="flex justify-between text-gray-600">
-                    <span>IGV (18%):</span><span>{formatCurrency(grandIgv)}</span>
+                    <span>IGV (18%):</span>
+                    <span>{formatCurrency(grandIgv)}</span>
                   </div>
                   <Divider />
                   <div className="flex justify-between font-bold text-base">
-                    <span>Total:</span><span>{formatCurrency(grandTotal)}</span>
+                    <span>Total:</span>
+                    <span>{formatCurrency(grandTotal)}</span>
                   </div>
                 </div>
               </div>
             </>
           )}
         </ModalBody>
+
         <ModalFooter>
-          <Button variant="light" onPress={onClose} isDisabled={loading}>Cancelar</Button>
-          <Button color="success" className="text-white" onPress={handleSubmit} isLoading={loading}>
+          <Button variant="light" onPress={onClose} isDisabled={loading}>
+            Cancelar
+          </Button>
+          <Button
+            color="success"
+            className="text-white"
+            onPress={handleSubmit}
+            isLoading={loading}
+          >
             Registrar Venta
           </Button>
         </ModalFooter>
