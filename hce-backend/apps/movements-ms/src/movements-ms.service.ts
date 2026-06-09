@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable prettier/prettier */
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,7 +14,7 @@ export class MovementsMsService {
   constructor(
     @InjectRepository(MovementsCab) private movCabRepo: Repository<MovementsCab>,
     @InjectRepository(MovementsDet) private movDetRepo: Repository<MovementsDet>,
-    @InjectRepository(Products) private productRepo: Repository<Products>,
+    @InjectRepository(Products)     private productRepo: Repository<Products>,
     private dataSource: DataSource,
   ) {}
 
@@ -40,8 +40,9 @@ export class MovementsMsService {
       }
 
       await queryRunner.commitTransaction();
-      this.logger.log(`Movimiento registrado: Tipo ${data.Id_TipoMovimiento} | Origen: ${data.Id_DocumentoOrigen}`);
-      
+      this.logger.log(
+        `Movimiento registrado: Tipo ${data.Id_TipoMovimiento} | Origen: ${data.Id_DocumentoOrigen}`,
+      );
       return { success: true, message: 'Kardex actualizado correctamente' };
     } catch (error: unknown) {
       await queryRunner.rollbackTransaction();
@@ -53,54 +54,73 @@ export class MovementsMsService {
     }
   }
 
-  async getKardexView() {
-  try {
-    const stockQuery = await this.dataSource.query(`
-      SELECT
-        p.Id_producto,
-        p.Nombre_producto,
-        p.Costo,
-        p.PrecioVenta,
-        ISNULL(SUM(
+  async getStockByProduct(productId: number): Promise<{ success: boolean; stock: number }> {
+    try {
+      const rows = await this.dataSource.query<{ stock: number }[]>(`
+        SELECT ISNULL(SUM(
           CASE mc.Id_TipoMovimiento
-            WHEN 1 THEN md.Cantidad   -- Entrada
-            WHEN 2 THEN -md.Cantidad  -- Salida
+            WHEN 1 THEN md.Cantidad
+            WHEN 2 THEN -md.Cantidad
             ELSE 0
           END
-        ), 0) AS StockActual
-      FROM Products p
-      LEFT JOIN MovementsDet md ON p.Id_producto = md.Id_Producto
-      LEFT JOIN MovementsCab mc ON md.Id_movimientocab = mc.Id_MovimientoCab
-      GROUP BY p.Id_producto, p.Nombre_producto, p.Costo, p.PrecioVenta
-      ORDER BY p.Id_producto
-    `);
+        ), 0) AS stock
+        FROM MovementsDet md
+        INNER JOIN MovementsCab mc ON md.Id_movimientocab = mc.Id_MovimientoCab
+        WHERE md.Id_Producto = @0
+      `, [productId]);
 
-    return { success: true, data: stockQuery };
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : 'Error desconocido';
-    return { success: false, error: msg };
+      const stock = Number(rows[0]?.stock ?? 0);
+      return { success: true, stock };
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Error desconocido';
+      return { success: false, stock: 0 };
+    }
   }
-}
+
+  async getKardexView() {
+    try {
+      const stockQuery = await this.dataSource.query(`
+        SELECT
+          p.Id_producto,
+          p.Nombre_producto,
+          p.Costo,
+          p.PrecioVenta,
+          ISNULL(SUM(
+            CASE mc.Id_TipoMovimiento
+              WHEN 1 THEN md.Cantidad
+              WHEN 2 THEN -md.Cantidad
+              ELSE 0
+            END
+          ), 0) AS StockActual
+        FROM Products p
+        LEFT JOIN MovementsDet md ON p.Id_producto = md.Id_Producto
+        LEFT JOIN MovementsCab mc ON md.Id_movimientocab = mc.Id_MovimientoCab
+        GROUP BY p.Id_producto, p.Nombre_producto, p.Costo, p.PrecioVenta
+        ORDER BY p.Id_producto
+      `);
+      return { success: true, data: stockQuery };
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Error desconocido';
+      return { success: false, error: msg };
+    }
+  }
 
   async getProductMovements(productId: number) {
     try {
       const movimientos = await this.movDetRepo.find({
         where: { Id_Producto: productId },
-        relations: {
-          MovimientoCab: true, 
-        },
+        relations: { MovimientoCab: true },
       });
 
-      const historial = movimientos.map((mov) => {
-        return {
-          FechaRegistro: mov['MovimientoCab']?.Fec_registro || new Date(),
-          TipoMovimiento: mov['MovimientoCab']?.Id_TipoMovimiento === 1 ? 'Entrada' : 'Salida',
-          Cantidad: mov.Cantidad,
-        };
-      });
+      const historial = movimientos.map((mov) => ({
+        FechaRegistro: mov.MovimientoCab?.Fec_registro ?? new Date(),
+        TipoMovimiento:
+          mov.MovimientoCab?.Id_TipoMovimiento === 1 ? 'Entrada' : 'Salida',
+        Cantidad: mov.Cantidad,
+      }));
 
       return { success: true, data: historial };
-    } catch (error: unknown) {
+    } catch {
       return { success: false, error: 'No se pudo obtener el historial' };
     }
   }

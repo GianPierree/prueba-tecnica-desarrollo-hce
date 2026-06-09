@@ -1,7 +1,10 @@
+/* eslint-disable prettier/prettier */
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { AuditLog } from '../decorators/audit-log.decorator';
+import { AUDIT_LOGGER_TOKEN } from '../interfaces/audit-logger.interface';
+import type { IAuditLogger } from '../interfaces/audit-logger.interface';
 import { CreatePurchaseDto } from '../../dto/create-purchase.dto';
 import { CreateSaleDto } from '../../dto/create-sale.dto';
 import { CreateProductDto } from '../../dto/create-product.dto';
@@ -12,14 +15,11 @@ export class BusinessFacade implements OnModuleInit {
   private readonly logger = new Logger(BusinessFacade.name);
 
   constructor(
-    @Inject('PURCHASES_SERVICE')
-    private readonly purchasesClient: ClientKafka,
-    @Inject('SALES_SERVICE')
-    private readonly salesClient: ClientKafka,
-    @Inject('MOVEMENTS_SERVICE')
-    private readonly movementsClient: ClientKafka,
-    @Inject('PRODUCTS_SERVICE')
-    private readonly productsClient: ClientKafka,
+    @Inject('PURCHASES_SERVICE')  private readonly purchasesClient: ClientKafka,
+    @Inject('SALES_SERVICE')      private readonly salesClient: ClientKafka,
+    @Inject('MOVEMENTS_SERVICE')  private readonly movementsClient: ClientKafka,
+    @Inject('PRODUCTS_SERVICE')   private readonly productsClient: ClientKafka,
+    @Inject(AUDIT_LOGGER_TOKEN)   readonly auditLogger: IAuditLogger,
   ) {}
 
   async onModuleInit() {

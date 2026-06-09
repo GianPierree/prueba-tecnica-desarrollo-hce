@@ -21,4 +21,9 @@ export class MovementsMsController {
   async handleGetProductMovements(@Payload() data: { productId: number }) {
     return await this.movementsMsService.getProductMovements(data.productId);
   }
+
+  @MessagePattern('get_stock_by_product')
+  async handleGetStockByProduct(@Payload() data: { productId: number }) {
+    return await this.movementsMsService.getStockByProduct(data.productId);
+  }
 }

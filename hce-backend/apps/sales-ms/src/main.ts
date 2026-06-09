@@ -4,18 +4,20 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { SalesMsModule } from './sales-ms.module';
 
 async function bootstrap() {
+  const broker = process.env.KAFKA_BROKER ?? 'localhost:9092';
+
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     SalesMsModule,
     {
       transport: Transport.KAFKA,
       options: {
-        client: { brokers: ['localhost:9092'] },
+        client: { brokers: [broker] },
         consumer: { groupId: 'sales-ms-consumer' },
       },
     },
   );
 
   await app.listen();
-  console.log('🚀 Microservicio de Ventas escuchando vía Kafka');
+  console.log(`🚀 Microservicio de Ventas escuchando [${broker}]`);
 }
 bootstrap();

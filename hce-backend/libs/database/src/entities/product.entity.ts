@@ -24,7 +24,4 @@ export class Products {
 
   @Column('decimal', { precision: 10, scale: 2 })
   PrecioVenta: number;
-
-  @Column('int', { default: 0 })
-  StockActual: number;
 }

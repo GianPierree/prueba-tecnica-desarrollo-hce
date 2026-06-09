@@ -1,13 +1,10 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Logger } from '@nestjs/common';
-
-const logger = new Logger('AuditDecorator');
 
 export function AuditLog(action: string) {
   return function (
-    target: object,
+    _target: object,
     propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
@@ -16,18 +13,22 @@ export function AuditLog(action: string) {
     ) => Promise<unknown>;
 
     descriptor.value = async function (...args: unknown[]) {
+      const logger = (this as { auditLogger?: { log: (m: string) => void; error: (m: string) => void } })
+        .auditLogger ?? {
+          log: (m: string) => console.log(m),
+          error: (m: string) => console.error(m),
+        };
+
       const start = Date.now();
       logger.log(`[INICIO] ${action} — método: ${propertyKey}`);
 
       try {
         const result = await originalMethod.apply(this, args);
-        const elapsed = Date.now() - start;
-        logger.log(`[FIN] ${action} completado en ${elapsed}ms`);
+        logger.log(`[FIN] ${action} completado en ${Date.now() - start}ms`);
         return result;
       } catch (error: unknown) {
-        const elapsed = Date.now() - start;
         const msg = error instanceof Error ? error.message : 'Error desconocido';
-        logger.error(`[ERROR] ${action} falló en ${elapsed}ms — ${msg}`);
+        logger.error(`[ERROR] ${action} falló en ${Date.now() - start}ms — ${msg}`);
         throw error;
       }
     };
