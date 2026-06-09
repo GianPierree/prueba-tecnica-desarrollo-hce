@@ -5,13 +5,10 @@ import { addToast } from "@heroui/react";
 import { authService } from "@/lib/services/auth.service";
 
 const navItems = [
-  { href: "/", label: "Dashboard" },
-  { href: "/dashboard/purchases", label: "Nueva Compra" },
-  { href: "/dashboard/purchases-list", label: "Compras" },
-  { href: "/dashboard/sales", label: "Nueva Venta" },
-  { href: "/dashboard/sales-list", label: "Ventas" },
-  { href: "/dashboard/kardex", label: "Kardex" },
-  { href: "/dashboard/products", label: "Productos" },
+  { href: "/dashboard/purchases", label: "Compras" },
+  { href: "/dashboard/sales",     label: "Ventas" },
+  { href: "/dashboard/kardex",    label: "Kardex" },
+  { href: "/dashboard/products",  label: "Productos" },
 ];
 
 export default function NavigationMenu() {
@@ -33,10 +30,7 @@ export default function NavigationMenu() {
           </div>
           <div className="flex items-center gap-1 overflow-x-auto">
             {navItems.map((item) => {
-              const isActive =
-                item.href === "/"
-                  ? router.pathname === "/"
-                  : router.pathname === item.href;
+              const isActive = router.pathname === item.href;
               return (
                 <Link
                   key={item.href}

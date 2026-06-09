@@ -12,7 +12,7 @@ const ToastProvider = dynamic(
   { ssr: false, loading: () => null }
 );
 
-export default function App({ Component, pageProps }: AppProps) {
+function App({ Component, pageProps }: AppProps) {
   return (
     <HeroUIProvider>
       <ToastProvider />
@@ -20,3 +20,5 @@ export default function App({ Component, pageProps }: AppProps) {
     </HeroUIProvider>
   );
 }
+
+export default dynamic(() => Promise.resolve(App), { ssr: false });

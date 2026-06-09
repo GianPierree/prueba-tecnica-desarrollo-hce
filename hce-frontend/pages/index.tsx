@@ -24,19 +24,6 @@ export default function Home() {
           </Link>
         ))}
       </div>
-      <div className="mt-8 bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="text-base font-semibold text-gray-800 mb-2">Arquitectura Microfrontend activa</h2>
-        <p className="text-sm text-gray-600 mb-3">Module Federation con <code className="bg-gray-100 px-1 rounded">@module-federation/nextjs-mf@8.1.10</code> sobre Next.js 14 (Pages Router).</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-          {[{l:"hce_frontend",p:"3000",d:"Host + Remote"},{l:"hce_purchases",p:"3001",d:"Remote Compras"},{l:"hce_sales",p:"3002",d:"Remote Ventas"},{l:"hce_kardex",p:"3003",d:"Remote Kardex"}].map(r => (
-            <div key={r.l} className="bg-gray-50 rounded-lg p-3">
-              <p className="font-mono font-medium text-blue-700">{r.l}</p>
-              <p className="text-gray-500">:{r.p}</p>
-              <p className="text-gray-400 mt-1">{r.d}</p>
-            </div>
-          ))}
-        </div>
-      </div>
     </DashboardLayout>
   );
 }

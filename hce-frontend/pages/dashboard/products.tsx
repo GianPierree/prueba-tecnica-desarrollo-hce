@@ -11,19 +11,32 @@ import { formatCurrency } from "@/lib/utils/formatters";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [toEdit, setToEdit] = useState<Product | null>(null);
 
   const load = useCallback(async () => {
+    setLoading(true);
     try {
-      const products = await productsService.getAll()
-      setProducts(products);
+      setProducts(await productsService.getAll());
     } catch {
       addToast({ title: "Error al cargar productos", color: "danger" });
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const handleNew = () => {
+    setToEdit(null);
+    setOpen(true);
+  };
+
+  const handleEdit = (p: Product) => {
+    setToEdit(p);
+    setOpen(true);
+  };
 
   return (
     <DashboardLayout>
@@ -32,7 +45,7 @@ export default function ProductsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Productos</h1>
           <p className="text-gray-500 text-sm mt-1">Catálogo de productos y control de precios</p>
         </div>
-        <Button color="primary" onPress={() => { setToEdit(null); setOpen(true); }}>
+        <Button color="primary" onPress={handleNew}>
           + Nuevo Producto
         </Button>
       </div>
@@ -48,7 +61,7 @@ export default function ProductsPage() {
             <TableColumn className="text-right">PRECIO VENTA</TableColumn>
             <TableColumn> </TableColumn>
           </TableHeader>
-          <TableBody emptyContent="No hay productos registrados">
+          <TableBody emptyContent={loading ? "Cargando..." : "No hay productos registrados"}>
             {products.map((p) => (
               <TableRow key={p.Id_producto}>
                 <TableCell>
@@ -68,7 +81,7 @@ export default function ProductsPage() {
                     size="sm"
                     variant="flat"
                     color="warning"
-                    onPress={() => { setToEdit(p); setOpen(true); }}
+                    onPress={() => handleEdit(p)}
                   >
                     Editar
                   </Button>

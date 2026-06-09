@@ -1,261 +1,157 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  Button,
-  Input,
-  Select,
-  SelectItem,
-  Chip,
-  Table,
-  TableHeader, 
-  TableColumn, 
-  TableBody, 
-  TableRow, 
-  TableCell,
-  Divider, 
+  Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
+  Button, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
   addToast,
 } from "@heroui/react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { productsService } from "@/lib/services/products.service";
+import SaleModal from "@/components/sales/SaleModal";
 import { salesService } from "@/lib/services/sales.service";
-import { kardexService } from "@/lib/services/kardex.service";
-import { Product } from "@/types/product.types";
+import { Sale } from "@/types/sale.types";
 import { formatCurrency } from "@/lib/utils/formatters";
 
-const TAX_RATE = 0.18;
-
-interface Line {
-  Id_producto: number;
-  nombre: string;
-  stock_disp: number;
-  Cantidad: number;
-  Precio: number;
-  subtotal: number;
-  igv: number;
-  total: number;
+function formatDate(str: string) {
+  return new Date(str).toLocaleDateString("es-PE", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+  });
 }
 
 export default function SalesPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [stockMap, setStockMap] = useState<Record<number, number>>({});
-  const [loading, setLoading] = useState(false);
-  const [selId, setSelId] = useState<number | null>(null);
-  const [qty, setQty] = useState("");
-  const [price, setPrice] = useState("");
-  const [stockDisp, setStockDisp] = useState<number | null>(null);
-  const [lines, setLines] = useState<Line[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newOpen, setNewOpen] = useState(false);
+  const [selected, setSelected] = useState<Sale | null>(null);
 
-  const loadData = useCallback(async () => {
-    try {
-      const [prods, kardex] = await Promise.all([
-        productsService.getAll(),
-        kardexService.getAll(),
-      ]);
-      setProducts(prods);
-      const map: Record<number, number> = {};
-      kardex.forEach((k) => { map[k.Id_producto] = k.StockActual; });
-      setStockMap(map);
-    } catch {
-      addToast({ title: "Error al cargar datos", color: "danger" });
-    }
-  }, []);
-
-  useEffect(() => { loadData(); }, [loadData]);
-
-  const onSelectProduct = (id: number) => {
-    setSelId(id);
-    const p = products.find((x) => x.Id_producto === id);
-    if (p) setPrice(String(p.PrecioVenta));
-    setStockDisp(stockMap[id] ?? 0);
-  };
-
-  const addLine = () => {
-    if (!selId || !qty || !price) {
-      addToast({ title: "Complete todos los campos", color: "warning" });
-      return;
-    }
-    const q = parseFloat(qty);
-    const pr = parseFloat(price);
-    if (q <= 0 || pr <= 0) {
-      addToast({ title: "Valores deben ser mayores a 0", color: "warning" });
-      return;
-    }
-    if (stockDisp !== null && q > stockDisp) {
-      addToast({
-        title: `Stock insuficiente. Disponible: ${stockDisp}`,
-        color: "danger",
-      });
-      return;
-    }
-    const subtotal = q * pr;
-    const igv = subtotal * TAX_RATE;
-    const total = subtotal + igv;
-    const p = products.find((x) => x.Id_producto === selId)!;
-    setLines((prev) => [
-      ...prev,
-      {
-        Id_producto: selId,
-        nombre: p.Nombre_producto,
-        stock_disp: stockDisp ?? 0,
-        Cantidad: q,
-        Precio: pr,
-        subtotal,
-        igv,
-        total,
-      },
-    ]);
-    setSelId(null);
-    setQty("");
-    setPrice("");
-    setStockDisp(null);
-  };
-
-  const grandSubtotal = lines.reduce((s, l) => s + l.subtotal, 0);
-  const grandIgv = lines.reduce((s, l) => s + l.igv, 0);
-  const grandTotal = lines.reduce((s, l) => s + l.total, 0);
-
-  const handleSubmit = async () => {
-    if (!lines.length) {
-      addToast({ title: "Agregue al menos un producto", color: "warning" });
-      return;
-    }
+  const load = useCallback(async () => {
     setLoading(true);
     try {
-      await salesService.create({
-        detalles: lines.map((l) => ({
-          Id_producto: l.Id_producto,
-          Cantidad: l.Cantidad,
-          Precio: l.Precio,
-        })),
-      });
-      addToast({ title: "Venta registrada correctamente", color: "success" });
-      setLines([]);
-      loadData();
-    } catch (e: unknown) {
-      const msg =
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Error al registrar venta";
-      addToast({ title: msg, color: "danger" });
+      setSales(await salesService.getAll());
+    } catch {
+      addToast({ title: "Error al cargar ventas", color: "danger" });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   return (
     <DashboardLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Registrar Venta</h1>
-        <p className="text-gray-500 text-sm mt-1">Stock validado desde movimientos en tiempo real</p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Ventas</h1>
+          <p className="text-gray-500 text-sm mt-1">Historial de ventas registradas</p>
+        </div>
+        <Button color="success" className="text-white" onPress={() => setNewOpen(true)}>
+          + Nueva Venta
+        </Button>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-6">
-        <div>
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">Agregar Producto</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <Table aria-label="Lista de ventas" removeWrapper>
+          <TableHeader>
+            <TableColumn>ID</TableColumn>
+            <TableColumn>FECHA</TableColumn>
+            <TableColumn className="text-right">SUBTOTAL</TableColumn>
+            <TableColumn className="text-right">IGV</TableColumn>
+            <TableColumn className="text-right">TOTAL</TableColumn>
+            <TableColumn>PRODUCTOS</TableColumn>
+            <TableColumn> </TableColumn>
+          </TableHeader>
+          <TableBody emptyContent={loading ? "Cargando..." : "No hay ventas registradas"}>
+            {sales.map((s) => (
+              <TableRow key={s.Id_VentaCab}>
+                <TableCell>
+                  <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+                    VENT-{String(s.Id_VentaCab).padStart(3, "0")}
+                  </code>
+                </TableCell>
+                <TableCell>{formatDate(s.fecRegistro)}</TableCell>
+                <TableCell className="text-right">{formatCurrency(s.SubTotal)}</TableCell>
+                <TableCell className="text-right">{formatCurrency(s.Igv)}</TableCell>
+                <TableCell className="text-right font-medium">{formatCurrency(s.Total)}</TableCell>
+                <TableCell>
+                  <Chip size="sm" variant="flat" color="success">
+                    {s.detalles?.length ?? 0} ítem(s)
+                  </Chip>
+                </TableCell>
+                <TableCell>
+                  <Button size="sm" variant="flat" onPress={() => setSelected(s)}>
+                    Ver detalle
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Modal nueva venta */}
+      <SaleModal
+        isOpen={newOpen}
+        onClose={() => setNewOpen(false)}
+        onSuccess={load}
+      />
+
+      {/* Modal detalle */}
+      <Modal isOpen={!!selected} onClose={() => setSelected(null)} size="3xl" scrollBehavior="inside">
+        <ModalContent>
+          <ModalHeader>
             <div>
-              <Select
-                label="Producto *"
-                placeholder="Seleccionar..."
-                selectedKeys={selId ? [String(selId)] : []}
-                onSelectionChange={(k) => onSelectProduct(Number(Array.from(k)[0]))}
-              >
-                {products.map((p) => (
-                  <SelectItem key={p.Id_producto}>
-                    {p.Nombre_producto}
-                  </SelectItem>
-                ))}
-              </Select>
-              {stockDisp !== null && (
-                <p className="text-xs mt-1 text-gray-500">
-                  Stock disponible:{" "}
-                  <span className={stockDisp > 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
-                    {stockDisp}
-                  </span>
+              <p className="text-lg font-semibold">Detalle de Venta</p>
+              {selected && (
+                <p className="text-sm text-gray-500 font-normal">
+                  VENT-{String(selected.Id_VentaCab).padStart(3, "0")} — {formatDate(selected.fecRegistro)}
                 </p>
               )}
             </div>
-            <Input
-              label="Cantidad *"
-              type="number"
-              min="1"
-              value={qty}
-              onChange={(e) => setQty(e.target.value)}
-            />
-            <Input
-              label="Precio Unit. (S/) *"
-              type="number"
-              min="0"
-              step="0.01"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-            />
-            <Button color="primary" onPress={addLine}>Agregar</Button>
-          </div>
-        </div>
-
-        {lines.length > 0 && (
-          <>
-            <Divider />
-            <Table aria-label="Detalle de venta" removeWrapper>
-              <TableHeader>
-                <TableColumn>PRODUCTO</TableColumn>
-                <TableColumn className="text-right">STOCK</TableColumn>
-                <TableColumn className="text-right">CANT.</TableColumn>
-                <TableColumn className="text-right">PRECIO</TableColumn>
-                <TableColumn className="text-right">SUBTOTAL</TableColumn>
-                <TableColumn className="text-right">IGV</TableColumn>
-                <TableColumn className="text-right">TOTAL</TableColumn>
-                <TableColumn> </TableColumn>
-              </TableHeader>
-              <TableBody>
-                {lines.map((l, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{l.nombre}</TableCell>
-                    <TableCell className="text-right">
-                      <Chip size="sm" color={l.stock_disp > 0 ? "success" : "danger"} variant="flat">
-                        {l.stock_disp}
-                      </Chip>
-                    </TableCell>
-                    <TableCell className="text-right">{l.Cantidad}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(l.Precio)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(l.subtotal)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(l.igv)}</TableCell>
-                    <TableCell className="text-right font-medium">{formatCurrency(l.total)}</TableCell>
-                    <TableCell>
-                      <button
-                        onClick={() => setLines((p) => p.filter((_, j) => j !== i))}
-                        className="text-red-500 hover:text-red-700 text-sm"
-                      >
-                        Quitar
-                      </button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-
-            <div className="flex justify-end">
-              <div className="w-64 space-y-2 text-sm">
-                <div className="flex justify-between text-gray-600">
-                  <span>Subtotal:</span><span>{formatCurrency(grandSubtotal)}</span>
+          </ModalHeader>
+          <ModalBody>
+            {selected && (
+              <>
+                <Table aria-label="Detalle venta" removeWrapper>
+                  <TableHeader>
+                    <TableColumn>ID PRODUCTO</TableColumn>
+                    <TableColumn className="text-right">CANT.</TableColumn>
+                    <TableColumn className="text-right">PRECIO</TableColumn>
+                    <TableColumn className="text-right">SUBTOTAL</TableColumn>
+                    <TableColumn className="text-right">IGV</TableColumn>
+                    <TableColumn className="text-right">TOTAL</TableColumn>
+                  </TableHeader>
+                  <TableBody>
+                    {(selected.detalles ?? []).map((d) => (
+                      <TableRow key={d.Id_VentaDet}>
+                        <TableCell>{d.Id_producto}</TableCell>
+                        <TableCell className="text-right">{d.Cantidad}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(d.Precio)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(d.Sub_Total)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(d.Igv)}</TableCell>
+                        <TableCell className="text-right font-medium">{formatCurrency(d.Total)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <div className="flex justify-end mt-4">
+                  <div className="w-56 space-y-1 text-sm">
+                    <div className="flex justify-between text-gray-600">
+                      <span>Subtotal:</span><span>{formatCurrency(selected.SubTotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>IGV:</span><span>{formatCurrency(selected.Igv)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold border-t pt-1">
+                      <span>Total:</span><span>{formatCurrency(selected.Total)}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>IGV (18%):</span><span>{formatCurrency(grandIgv)}</span>
-                </div>
-                <Divider />
-                <div className="flex justify-between font-bold text-base">
-                  <span>Total:</span><span>{formatCurrency(grandTotal)}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <Button color="success" size="lg" className="text-white" onPress={handleSubmit} isLoading={loading}>
-                Registrar Venta
-              </Button>
-            </div>
-          </>
-        )}
-      </div>
+              </>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button color="primary" onPress={() => setSelected(null)}>Cerrar</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </DashboardLayout>
   );
 }
