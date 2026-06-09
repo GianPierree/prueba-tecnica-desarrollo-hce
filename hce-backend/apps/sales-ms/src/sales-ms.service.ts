@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Injectable, Logger, Inject, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { RpcException, ClientKafka } from '@nestjs/microservices';
@@ -11,7 +11,7 @@ import { AUDIT_LOGGER_TOKEN } from '../../hce-backend/src/common/interfaces/audi
 import type { IAuditLogger } from '../../hce-backend/src/common/interfaces/audit-logger.interface';
 
 @Injectable()
-export class SalesMsService {
+export class SalesMsService implements OnModuleInit {
   private readonly logger = new Logger(SalesMsService.name);
 
   constructor(
@@ -22,6 +22,12 @@ export class SalesMsService {
     private dataSource: DataSource,
     @Inject(AUDIT_LOGGER_TOKEN)  readonly auditLogger: IAuditLogger,
   ) {}
+
+  async onModuleInit() {
+    this.movementsClient.subscribeToResponseOf('register_movement');
+    this.movementsClient.subscribeToResponseOf('get_stock_by_product');
+    await this.movementsClient.connect();
+  }
 
   @AuditLog('Procesar Venta')
   async processSale(data: CreateSalePayload) {
