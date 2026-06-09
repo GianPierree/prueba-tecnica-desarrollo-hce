@@ -86,14 +86,12 @@ export default function SalesPage() {
         </Table>
       </div>
 
-      {/* Modal nueva venta */}
       <SaleModal
         isOpen={newOpen}
         onClose={() => setNewOpen(false)}
         onSuccess={load}
       />
 
-      {/* Modal detalle */}
       <Modal isOpen={!!selected} onClose={() => setSelected(null)} size="3xl" scrollBehavior="inside">
         <ModalContent>
           <ModalHeader>

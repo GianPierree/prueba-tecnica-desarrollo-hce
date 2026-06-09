@@ -95,7 +95,7 @@ export class PurchasesMsService implements OnModuleInit {
       await queryRunner.commitTransaction();
 
       const movementPayload = {
-        Id_TipoMovimiento: 1, // Entrada
+        Id_TipoMovimiento: 1, 
         Id_DocumentoOrigen: savedCab.Id_CompraCab,
         detalles: data.detalles.map((d) => ({
           Id_producto: d.Id_producto,

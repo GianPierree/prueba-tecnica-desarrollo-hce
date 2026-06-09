@@ -99,7 +99,7 @@ describe('HCE API Gateway (e2e)', () => {
       await request(app.getHttpServer())
         .post('/api/purchases')
         .set('Authorization', 'Bearer test-token')
-        .send({ detalles: [] }) // array vacío sin items
+        .send({ detalles: [] })
         .expect(400);
     });
   });

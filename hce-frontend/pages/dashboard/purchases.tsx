@@ -86,14 +86,12 @@ export default function PurchasesPage() {
         </Table>
       </div>
 
-      {/* Modal nueva compra */}
       <PurchaseModal
         isOpen={newOpen}
         onClose={() => setNewOpen(false)}
         onSuccess={load}
       />
 
-      {/* Modal detalle */}
       <Modal isOpen={!!selected} onClose={() => setSelected(null)} size="3xl" scrollBehavior="inside">
         <ModalContent>
           <ModalHeader>
